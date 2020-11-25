@@ -1,2 +1,3 @@
 .vscode/
 simOutput/
+__pycache__/
