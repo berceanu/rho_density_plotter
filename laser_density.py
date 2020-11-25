@@ -1,21 +1,25 @@
+#!/usr/bin/env python
+# coding: utf-8
 import pathlib
 from copy import copy
 from openpmd_viewer import addons
-from matplotlib import pyplot, colors, cm, rcParams
+import matplotlib.pyplot as plt
+from matplotlib import colors, cm, rcParams
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import unyt as u
 from prepic import lwfa
 import numpy as np
 from scipy.signal import hilbert
-import colorcet as cc
+#import colorcet as cc
+import custom_colormap as cc
 import figformat
 
 fig_width, fig_height, params = figformat.figure_format(fig_width=3.4)
 rcParams.update(params)
 
-my_cmap = copy(cc.cm.fire)
-my_cmap.set_under("k", alpha=0)
-
+#my_cmap = copy(cc.cm.fire)
+#my_cmap.set_under("k", alpha=0)
+cc.colormap_alpha('Reds')
 
 a0 = 2.4 * u.dimensionless  # Laser amplitude
 tau = 25.0e-15 / 2.354820045 * u.second  # Laser duration
@@ -51,8 +55,7 @@ electric, electric_info = ts.get_field(
 e_complx = hilbert(electric, axis=0)
 envelope = np.abs(e_complx)
 
-
-fig, ax = pyplot.subplots(figsize=(fig_width, fig_height))
+fig, ax = plt.subplots(figsize=(fig_width, fig_height))
 
 im_rho = ax.imshow(
     np.flipud(np.rot90(rho / n_c)),
@@ -67,7 +70,7 @@ im_envelope = ax.imshow(
     extent=np.roll(electric_info.imshow_extent * 1e6, 2),
     origin="lower",
     aspect="auto",
-    cmap=my_cmap,
+    cmap='Reds_alpha',
 )
 im_envelope.set_clim(vmin=1.0)
 
@@ -97,15 +100,13 @@ cbar_rho = fig.colorbar(
 )
 cbar_env.set_label(r"$eE_{z} / m c \omega_\mathrm{L}$")
 cbar_rho.set_label(r"$n_{e} / n_\mathrm{cr}$")
-
-
+cbar_rho.set_ticks([1e-4,1e-2,1e0])
 # Add the name of the axes
 ax.set_ylabel(r"${} \;(\mu m)$".format(rho_info.axes[1]))
 ax.set_xlabel(r"${} \;(\mu m)$".format(rho_info.axes[0]))
 
-
 fig.savefig(
-    "laser_density.png",
+    pathlib.Path.cwd()/"laser_density.png",
     dpi=600,
     transparent=False,
     bbox_inches="tight",
