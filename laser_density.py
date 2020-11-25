@@ -102,8 +102,8 @@ cbar_env.set_label(r"$eE_{z} / m c \omega_\mathrm{L}$")
 cbar_rho.set_label(r"$n_{e} / n_\mathrm{cr}$")
 cbar_rho.set_ticks([1e-4,1e-2,1e0])
 # Add the name of the axes
-ax.set_ylabel(r"${} \;(\mu m)$".format(rho_info.axes[1]))
-ax.set_xlabel(r"${} \;(\mu m)$".format(rho_info.axes[0]))
+ax.set_ylabel("$x \;(\mu \mathrm{m} )$")
+ax.set_xlabel("$y \;(\mu \mathrm{m} )$")
 
 fig.savefig(
     pathlib.Path.cwd()/"laser_density.png",
