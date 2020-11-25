@@ -1,49 +1,83 @@
 import pathlib
-from openpmd_viewer import OpenPMDTimeSeries
-from matplotlib import pyplot, colors
+from copy import copy
+from openpmd_viewer import addons
+from matplotlib import pyplot, colors, cm
 import unyt as u
 from prepic import lwfa
 import numpy as np
+from scipy.signal import hilbert
 
-a0 = 2.4  # Laser amplitude
-tau = 25.0e-15 / 2.354820045  # Laser duration, sec
-w0 = 22.0e-6 / 1.17741  # Laser waist
-lambda0 = 0.8e-6  # Laser wavelength
+my_cmap = copy(cm.get_cmap("inferno"))
+my_cmap.set_under("k", alpha=0)
+
+
+a0 = 2.4 * u.dimensionless  # Laser amplitude
+tau = 25.0e-15 / 2.354820045 * u.second  # Laser duration
+w0 = 22.0e-6 / 1.17741 * u.meter  # Laser waist
+lambda0 = 0.8e-6 * u.meter  # Laser wavelength
 
 laser = lwfa.Laser.from_a0(
-    a0=a0 * u.dimensionless,
-    τL=tau * u.second,
-    beam=lwfa.GaussianBeam(w0=w0 * u.meter, λL=lambda0 * u.meter),
+    a0=a0,
+    τL=tau,
+    beam=lwfa.GaussianBeam(w0=w0, λL=lambda0),
 )
 n_c = laser.ncrit.to_value("1/m**3")
 # 1.7419595910637713e+27
+E0 = (laser.E0 / a0).to_value("volt/m")
+# 4013376052599.5396
 
+p = pathlib.Path.cwd() / "simOutput" / "h5"
+ts = addons.LpaDiagnostics(p)
 
-p = pathlib.Path.cwd() / "betatron0007" / "simOutput" / "h5"
-ts = OpenPMDTimeSeries(p)
-
-
+# Plot the density
 rho, rho_info = ts.get_field(
     field="e_density",
-    coord=None,
     iteration=50000,
-    theta=None,
     slice_across="z",
 )
 
 fig, ax = pyplot.subplots(figsize=(7, 5))
 
-# Plot the data
 im = ax.imshow(
-    np.rot90(rho / n_c),
+    np.flipud(np.rot90(rho / n_c)),
     extent=np.roll(rho_info.imshow_extent * 1e6, 2),
     interpolation="nearest",
+    origin="lower",
     aspect="auto",
     norm=colors.SymLogNorm(linthresh=1e-4, linscale=0.15, base=10),
 )
 # Add the name of the axes
-ax.set_ylabel("$%s \;(\mu m)$" % rho_info.axes[1])
-ax.set_xlabel("$%s \;(\mu m)$" % rho_info.axes[0])
+ax.set_ylabel(r"${} \;(\mu m)$".format(rho_info.axes[1]))
+ax.set_xlabel(r"${} \;(\mu m)$".format(rho_info.axes[0]))
 
 fig.colorbar(im)
-fig.savefig("e_density_z.png")
+fig.savefig("e_density.png")
+
+# Plot the electric field envelope
+electric, electric_info = ts.get_field(
+    field="E",
+    coord="z",
+    iteration=50000,
+    slice_across="z",
+)
+# get laser envelope
+e_complx = hilbert(electric, axis=0)
+envelope = np.abs(e_complx)
+
+fig, ax = pyplot.subplots(figsize=(7, 5))
+
+im = ax.imshow(
+    np.flipud(np.rot90(envelope / E0)),
+    extent=np.roll(electric_info.imshow_extent * 1e6, 2),
+    interpolation="nearest",
+    origin="lower",
+    aspect="auto",
+    cmap=my_cmap,
+)
+im.set_clim(vmin=1.0)
+# Add the name of the axes
+ax.set_ylabel(r"${} \;(\mu m)$".format(electric_info.axes[1]))
+ax.set_xlabel(r"${} \;(\mu m)$".format(electric_info.axes[0]))
+
+fig.colorbar(im)
+fig.savefig("envelope.png")
