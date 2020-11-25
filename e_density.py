@@ -61,6 +61,7 @@ electric, electric_info = ts.get_field(
     slice_across="z",
 )
 # get laser envelope
+# FIXME use ts.get_laser_envelope() once https://github.com/openPMD/openPMD-viewer/issues/292 is solved
 e_complx = hilbert(electric, axis=0)
 envelope = np.abs(e_complx)
 
