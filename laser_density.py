@@ -1,13 +1,19 @@
 import pathlib
 from copy import copy
 from openpmd_viewer import addons
-from matplotlib import pyplot, colors, cm
+from matplotlib import pyplot, colors, cm, rcParams
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import unyt as u
 from prepic import lwfa
 import numpy as np
 from scipy.signal import hilbert
+import colorcet as cc
+import figformat
 
-my_cmap = copy(cm.get_cmap("inferno"))
+fig_width, fig_height, params = figformat.figure_format(fig_width=3.4)
+rcParams.update(params)
+
+my_cmap = copy(cc.cm.fire)
 my_cmap.set_under("k", alpha=0)
 
 
@@ -46,30 +52,61 @@ e_complx = hilbert(electric, axis=0)
 envelope = np.abs(e_complx)
 
 
-fig, ax = pyplot.subplots(figsize=(7, 5))
+fig, ax = pyplot.subplots(figsize=(fig_width, fig_height))
 
 im_rho = ax.imshow(
     np.flipud(np.rot90(rho / n_c)),
     extent=np.roll(rho_info.imshow_extent * 1e6, 2),
-    interpolation="nearest",
     origin="lower",
     aspect="auto",
     norm=colors.SymLogNorm(linthresh=1e-4, linscale=0.15, base=10),
+    cmap=cm.get_cmap("cividis"),
 )
 im_envelope = ax.imshow(
     np.flipud(np.rot90(envelope / E0)),
     extent=np.roll(electric_info.imshow_extent * 1e6, 2),
-    interpolation="nearest",
     origin="lower",
     aspect="auto",
     cmap=my_cmap,
 )
 im_envelope.set_clim(vmin=1.0)
-fig.colorbar(mappable=im_envelope)
-fig.colorbar(mappable=im_rho)
+
+cbaxes_rho = inset_axes(
+    ax,
+    width="3%",  # width = 10% of parent_bbox width
+    height="46%",  # height : 50%
+    loc=2,
+    bbox_to_anchor=(1.01, 0.0, 1, 1),
+    bbox_transform=ax.transAxes,
+    borderpad=0,
+)
+cbaxes_env = inset_axes(
+    ax,
+    width="3%",  # width = 5% of parent_bbox width
+    height="46%",  # height : 50%
+    loc=3,
+    bbox_to_anchor=(1.01, 0.0, 1, 1),
+    bbox_transform=ax.transAxes,
+    borderpad=0,
+)
+cbar_env = fig.colorbar(
+    mappable=im_envelope, orientation="vertical", ticklocation="right", cax=cbaxes_env
+)
+cbar_rho = fig.colorbar(
+    mappable=im_rho, orientation="vertical", ticklocation="right", cax=cbaxes_rho
+)
+cbar_env.set_label(r"$eE_{z} / m c \omega_\mathrm{L}$")
+cbar_rho.set_label(r"$n_{e} / n_\mathrm{cr}$")
+
 
 # Add the name of the axes
 ax.set_ylabel(r"${} \;(\mu m)$".format(rho_info.axes[1]))
 ax.set_xlabel(r"${} \;(\mu m)$".format(rho_info.axes[0]))
 
-fig.savefig("both.png")
+
+fig.savefig(
+    "laser_density.png",
+    dpi=600,
+    transparent=False,
+    bbox_inches="tight",
+)
