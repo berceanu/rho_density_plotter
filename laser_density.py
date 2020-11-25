@@ -48,7 +48,7 @@ electric, electric_info = ts.get_field(
 )
 # get laser envelope
 # FIXME use ts.get_laser_envelope() once https://github.com/openPMD/openPMD-viewer/issues/292 is solved
-e_complx = hilbert(electric, axis=0)
+e_complx = hilbert(electric / E0, axis=0)
 envelope = np.abs(e_complx)
 
 
@@ -58,15 +58,13 @@ im_rho = ax.imshow(
     np.flipud(np.rot90(rho / n_c)),
     extent=np.roll(rho_info.imshow_extent * 1e6, 2),
     origin="lower",
-    aspect="auto",
     norm=colors.SymLogNorm(linthresh=1e-4, linscale=0.15, base=10),
     cmap=cm.get_cmap("cividis"),
 )
 im_envelope = ax.imshow(
-    np.flipud(np.rot90(envelope / E0)),
+    np.flipud(np.rot90(envelope)),
     extent=np.roll(electric_info.imshow_extent * 1e6, 2),
     origin="lower",
-    aspect="auto",
     cmap=my_cmap,
 )
 im_envelope.set_clim(vmin=1.0)
