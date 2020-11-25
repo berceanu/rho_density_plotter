@@ -3,22 +3,18 @@
 import pathlib
 from copy import copy
 from openpmd_viewer import addons
-import matplotlib.pyplot as plt
-from matplotlib import colors, cm, rcParams
+from matplotlib import pyplot as plt, colors, cm, rcParams
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import unyt as u
 from prepic import lwfa
 import numpy as np
 from scipy.signal import hilbert
-#import colorcet as cc
 import custom_colormap as cc
 import figformat
 
 fig_width, fig_height, params = figformat.figure_format(fig_width=3.4)
 rcParams.update(params)
 
-#my_cmap = copy(cc.cm.fire)
-#my_cmap.set_under("k", alpha=0)
 cc.colormap_alpha('Reds')
 
 a0 = 2.4 * u.dimensionless  # Laser amplitude
@@ -55,13 +51,21 @@ electric, electric_info = ts.get_field(
 e_complx = hilbert(electric, axis=0)
 envelope = np.abs(e_complx)
 
+# get longitudinal field
+e_y_of_y, e_y_of_y_info = ts.get_field(
+    field="E",
+    coord="y",
+    iteration=50000,
+    slice_across=["z", "x"],
+)
+
+
 fig, ax = plt.subplots(figsize=(fig_width, fig_height))
 
 im_rho = ax.imshow(
     np.flipud(np.rot90(rho / n_c)),
     extent=np.roll(rho_info.imshow_extent * 1e6, 2),
     origin="lower",
-    aspect="auto",
     norm=colors.SymLogNorm(linthresh=1e-4, linscale=0.15, base=10),
     cmap=cm.get_cmap("cividis"),
 )
@@ -69,10 +73,13 @@ im_envelope = ax.imshow(
     np.flipud(np.rot90(envelope / E0)),
     extent=np.roll(electric_info.imshow_extent * 1e6, 2),
     origin="lower",
-    aspect="auto",
     cmap='Reds_alpha',
 )
 im_envelope.set_clim(vmin=1.0)
+
+# plot longitudinal field
+ax.plot(e_y_of_y_info.y * 1e6, e_y_of_y / E0 * 25 + 10, color="tab:gray")
+ax.axhline(10, color="tab:gray", ls="-.")
 
 cbaxes_rho = inset_axes(
     ax,

@@ -2,3 +2,5 @@
 _pycache_
 *.ipynb
 /simOutput
+.vscode/
+__pycache__/
