@@ -19,32 +19,31 @@ n_c = laser.ncrit.to_value("1/m**3")
 # 1.7419595910637713e+27
 
 
-p = pathlib.Path.cwd() / "example-3d" / "hdf5"
+p = pathlib.Path.cwd() / "betatron0007" / "simOutput" / "h5"
 ts = OpenPMDTimeSeries(p)
 
 
 rho, rho_info = ts.get_field(
-    field="rho",
+    field="e_density",
     coord=None,
-    iteration=500,
+    iteration=50000,
     theta=None,
-    slice_across="y",
+    slice_across="z",
 )
 
 fig, ax = pyplot.subplots(figsize=(7, 5))
 
 # Plot the data
 im = ax.imshow(
-    rho,
-    extent=rho_info.imshow_extent * 1e6,
+    np.rot90(rho / n_c),
+    extent=np.roll(rho_info.imshow_extent * 1e6, 2),
     interpolation="nearest",
-    origin="lower",
     aspect="auto",
     norm=colors.SymLogNorm(linthresh=1e-4, linscale=0.15, base=10),
 )
 # Add the name of the axes
-ax.set_xlabel("$%s \;(\mu m)$" % rho_info.axes[1])
-ax.set_ylabel("$%s \;(\mu m)$" % rho_info.axes[0])
+ax.set_ylabel("$%s \;(\mu m)$" % rho_info.axes[1])
+ax.set_xlabel("$%s \;(\mu m)$" % rho_info.axes[0])
 
 fig.colorbar(im)
-fig.savefig("e_density.png")
+fig.savefig("e_density_z.png")
