@@ -4,3 +4,4 @@ _pycache_
 /simOutput
 .vscode/
 __pycache__/
+diags/
