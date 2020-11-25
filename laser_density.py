@@ -13,8 +13,8 @@ import figformat
 fig_width, fig_height, params = figformat.figure_format(fig_width=3.4)
 rcParams.update(params)
 
-my_cmap = copy(cc.cm.fire)
-my_cmap.set_under("k", alpha=0)
+my_cmap = copy(cc.cm.dimgray)
+my_cmap.set_under("black", alpha=0)
 
 
 a0 = 2.4 * u.dimensionless  # Laser amplitude
@@ -51,6 +51,14 @@ electric, electric_info = ts.get_field(
 e_complx = hilbert(electric / E0, axis=0)
 envelope = np.abs(e_complx)
 
+# get longitudinal field
+e_y_of_y, e_y_of_y_info = ts.get_field(
+    field="E",
+    coord="y",
+    iteration=50000,
+    slice_across=["z", "x"],
+)
+
 
 fig, ax = pyplot.subplots(figsize=(fig_width, fig_height))
 
@@ -68,6 +76,10 @@ im_envelope = ax.imshow(
     cmap=my_cmap,
 )
 im_envelope.set_clim(vmin=1.0)
+
+# plot longitudinal field
+ax.plot(e_y_of_y_info.y * 1e6, e_y_of_y / E0 * 25 + 10, color="tab:gray")
+ax.axhline(10, color="tab:gray", ls="-.")
 
 cbaxes_rho = inset_axes(
     ax,
