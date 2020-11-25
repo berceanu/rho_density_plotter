@@ -29,31 +29,11 @@ E0 = (laser.E0 / a0).to_value("volt/m")
 p = pathlib.Path.cwd() / "simOutput" / "h5"
 ts = addons.LpaDiagnostics(p)
 
-# Plot the density
 rho, rho_info = ts.get_field(
     field="e_density",
     iteration=50000,
     slice_across="z",
 )
-
-fig, ax = pyplot.subplots(figsize=(7, 5))
-
-im = ax.imshow(
-    np.flipud(np.rot90(rho / n_c)),
-    extent=np.roll(rho_info.imshow_extent * 1e6, 2),
-    interpolation="nearest",
-    origin="lower",
-    aspect="auto",
-    norm=colors.SymLogNorm(linthresh=1e-4, linscale=0.15, base=10),
-)
-# Add the name of the axes
-ax.set_ylabel(r"${} \;(\mu m)$".format(rho_info.axes[1]))
-ax.set_xlabel(r"${} \;(\mu m)$".format(rho_info.axes[0]))
-
-fig.colorbar(im)
-fig.savefig("e_density.png")
-
-# Plot the electric field envelope
 electric, electric_info = ts.get_field(
     field="E",
     coord="z",
@@ -65,9 +45,18 @@ electric, electric_info = ts.get_field(
 e_complx = hilbert(electric, axis=0)
 envelope = np.abs(e_complx)
 
+
 fig, ax = pyplot.subplots(figsize=(7, 5))
 
-im = ax.imshow(
+im_rho = ax.imshow(
+    np.flipud(np.rot90(rho / n_c)),
+    extent=np.roll(rho_info.imshow_extent * 1e6, 2),
+    interpolation="nearest",
+    origin="lower",
+    aspect="auto",
+    norm=colors.SymLogNorm(linthresh=1e-4, linscale=0.15, base=10),
+)
+im_envelope = ax.imshow(
     np.flipud(np.rot90(envelope / E0)),
     extent=np.roll(electric_info.imshow_extent * 1e6, 2),
     interpolation="nearest",
@@ -75,10 +64,12 @@ im = ax.imshow(
     aspect="auto",
     cmap=my_cmap,
 )
-im.set_clim(vmin=1.0)
-# Add the name of the axes
-ax.set_ylabel(r"${} \;(\mu m)$".format(electric_info.axes[1]))
-ax.set_xlabel(r"${} \;(\mu m)$".format(electric_info.axes[0]))
+im_envelope.set_clim(vmin=1.0)
+fig.colorbar(mappable=im_envelope)
+fig.colorbar(mappable=im_rho)
 
-fig.colorbar(im)
-fig.savefig("envelope.png")
+# Add the name of the axes
+ax.set_ylabel(r"${} \;(\mu m)$".format(rho_info.axes[1]))
+ax.set_xlabel(r"${} \;(\mu m)$".format(rho_info.axes[0]))
+
+fig.savefig("both.png")
