@@ -1,17 +1,21 @@
+"""
+Plot on the same figure the laser pulse envelope and the electron density
+from a given fbpic hdf5 file.
+"""
+
 import pathlib
 from copy import copy
 from openpmd_viewer import addons
-from matplotlib import pyplot as plt, colors, cm, rcParams
+from matplotlib import pyplot as plt, colors, cm
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import unyt as u
 from prepic import lwfa
 import numpy as np
-from scipy.signal import hilbert
 import colorcet as cc
 
 
 my_cmap = copy(cc.m_fire)
-my_cmap.set_under("k", alpha=0)
+my_cmap.set_under("white", alpha=0)
 
 a0 = 2.4 * u.dimensionless  # Laser amplitude
 tau = 25.0e-15 / 2.354820045 * u.second  # Laser duration
@@ -44,7 +48,7 @@ rho, rho_info = ts.get_field(
     iteration=40110,
     plot=True,
 )
-envelope, env_info = ts.get_laser_envelope(iteration=40110, pol='x')
+envelope, env_info = ts.get_laser_envelope(iteration=40110, pol="x")
 
 # get longitudinal field
 e_z_of_z, e_z_of_z_info = ts.get_field(
@@ -73,8 +77,8 @@ im_envelope = ax.imshow(
 im_envelope.set_clim(vmin=1.0)
 
 # plot longitudinal field
-ax.plot(e_z_of_z_info.z * 1e6, e_z_of_z / E0 * 25 - 20, color="tab:gray")
-ax.axhline(-20, color="tab:gray", ls="-.")
+ax.plot(e_z_of_z_info.z * 1e6, e_z_of_z / E0 * 25 - 30, color="0.75")
+ax.axhline(-30, color="0.65", ls="-.")
 
 cbaxes_rho = inset_axes(
     ax,
