@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
 import pathlib
 from copy import copy
 from openpmd_viewer import addons
@@ -9,13 +7,11 @@ import unyt as u
 from prepic import lwfa
 import numpy as np
 from scipy.signal import hilbert
-import custom_colormap as cc
-import figformat
+import colorcet as cc
 
-fig_width, fig_height, params = figformat.figure_format(fig_width=3.4)
-rcParams.update(params)
 
-cc.colormap_alpha('Reds')
+my_cmap = copy(cc.m_fire)
+my_cmap.set_under("k", alpha=0)
 
 a0 = 2.4 * u.dimensionless  # Laser amplitude
 tau = 25.0e-15 / 2.354820045 * u.second  # Laser duration
@@ -31,54 +27,54 @@ n_c = laser.ncrit.to_value("1/m**3")
 # 1.7419595910637713e+27
 E0 = (laser.E0 / a0).to_value("volt/m")
 # 4013376052599.5396
+qe = u.qe.to_value("C")
+# -1.6021766208e-19
 
 p = pathlib.Path.cwd() / "diags" / "hdf5"
 ts = addons.LpaDiagnostics(p)
 
+# the field "rho" has (SI) units of charge/volume (Q/V), C/(m^3)
+# the initial density n_e has units of N/V, N = electron number
+# multiply by electron charge -q_e to get (N e) / V
+# so we get Q / N e, which is C/C, i.e. dimensionless
+# Note: one can also normalize by the critical density n_c
+
 rho, rho_info = ts.get_field(
     field="rho",
     iteration=40110,
+    plot=True,
 )
-electric, electric_info = ts.get_field(
-    field="E",
-    coord="r",
-    iteration=40110,
-    slice_across="z",
-)
-# get laser envelope
-# FIXME use ts.get_laser_envelope() once https://github.com/openPMD/openPMD-viewer/issues/292 is solved
-e_complx = hilbert(electric, axis=0)
-envelope = np.abs(e_complx)
+envelope, env_info = ts.get_laser_envelope(iteration=40110, pol='x')
 
 # get longitudinal field
-e_y_of_y, e_y_of_y_info = ts.get_field(
+e_z_of_z, e_z_of_z_info = ts.get_field(
     field="E",
-    coord="y",
+    coord="z",
     iteration=40110,
-    slice_across=["z", "x"],
+    slice_across="r",
 )
 
 
-fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+fig, ax = plt.subplots(figsize=(20, 8))
 
 im_rho = ax.imshow(
-    np.flipud(np.rot90(rho / n_c)),
-    extent=np.roll(rho_info.imshow_extent * 1e6, 2),
+    rho / (np.abs(qe) * n_c),
+    extent=rho_info.imshow_extent * 1e6,
     origin="lower",
     norm=colors.SymLogNorm(linthresh=1e-4, linscale=0.15, base=10),
     cmap=cm.get_cmap("cividis"),
 )
 im_envelope = ax.imshow(
-    np.flipud(np.rot90(envelope / E0)),
-    extent=np.roll(electric_info.imshow_extent * 1e6, 2),
+    envelope / E0,
+    extent=env_info.imshow_extent * 1e6,
     origin="lower",
-    cmap='Reds_alpha',
+    cmap=my_cmap,
 )
 im_envelope.set_clim(vmin=1.0)
 
 # plot longitudinal field
-ax.plot(e_y_of_y_info.y * 1e6, e_y_of_y / E0 * 25 + 10, color="tab:gray")
-ax.axhline(10, color="tab:gray", ls="-.")
+ax.plot(e_z_of_z_info.z * 1e6, e_z_of_z / E0 * 25 - 20, color="tab:gray")
+ax.axhline(-20, color="tab:gray", ls="-.")
 
 cbaxes_rho = inset_axes(
     ax,
@@ -104,16 +100,17 @@ cbar_env = fig.colorbar(
 cbar_rho = fig.colorbar(
     mappable=im_rho, orientation="vertical", ticklocation="right", cax=cbaxes_rho
 )
-cbar_env.set_label(r"$eE_{z} / m c \omega_\mathrm{L}$")
+cbar_env.set_label(r"$eE_{x} / m c \omega_\mathrm{L}$")
 cbar_rho.set_label(r"$n_{e} / n_\mathrm{cr}$")
-cbar_rho.set_ticks([1e-4,1e-2,1e0])
+# cbar_rho.set_ticks([1e-4,1e-2,1e0])
+
 # Add the name of the axes
-ax.set_ylabel("$x \;(\mu \mathrm{m} )$")
-ax.set_xlabel("$y \;(\mu \mathrm{m} )$")
+ax.set_ylabel(r"${} \;(\mu m)$".format(rho_info.axes[0]))
+ax.set_xlabel(r"${} \;(\mu m)$".format(rho_info.axes[1]))
 
 fig.savefig(
-    pathlib.Path.cwd()/"laser_density.png",
-    dpi=600,
+    "laser_density.png",
+    dpi=300,
     transparent=False,
     bbox_inches="tight",
 )
