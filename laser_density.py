@@ -45,16 +45,16 @@ ts = addons.LpaDiagnostics(p)
 
 rho, rho_info = ts.get_field(
     field="rho_electrons",
-    iteration=40110,
+    iteration=382,
     plot=True,
 )
-envelope, env_info = ts.get_laser_envelope(iteration=40110, pol="x")
+envelope, env_info = ts.get_laser_envelope(iteration=382, pol="x")
 
 # get longitudinal field
 e_z_of_z, e_z_of_z_info = ts.get_field(
     field="E",
     coord="z",
-    iteration=40110,
+    iteration=382,
     slice_across="r",
 )
 
