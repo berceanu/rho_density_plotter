@@ -37,6 +37,7 @@ qe = u.qe.to_value("C")
 p = pathlib.Path.cwd() / "diags" / "hdf5"
 ts = addons.LpaDiagnostics(p)
 
+
 # the field "rho" has (SI) units of charge/volume (Q/V), C/(m^3)
 # the initial density n_e has units of N/V, N = electron number
 # multiply by electron charge -q_e to get (N e) / V
@@ -45,16 +46,16 @@ ts = addons.LpaDiagnostics(p)
 
 rho, rho_info = ts.get_field(
     field="rho_electrons",
-    iteration=382,
+    iteration=40110,
     plot=True,
 )
-envelope, env_info = ts.get_laser_envelope(iteration=382, pol="x")
+envelope, env_info = ts.get_laser_envelope(iteration=40110, pol="x")
 
 # get longitudinal field
 e_z_of_z, e_z_of_z_info = ts.get_field(
     field="E",
     coord="z",
-    iteration=382,
+    iteration=40110,
     slice_across="r",
 )
 
@@ -111,6 +112,9 @@ cbar_rho.set_label(r"$n_{e} / n_\mathrm{cr}$")
 # Add the name of the axes
 ax.set_ylabel(r"${} \;(\mu m)$".format(rho_info.axes[0]))
 ax.set_xlabel(r"${} \;(\mu m)$".format(rho_info.axes[1]))
+
+current_time = (ts.current_t * u.second).to("picosecond")
+ax.set_title(f"t = {current_time:.2f}")
 
 fig.savefig(
     "laser_density.png",
