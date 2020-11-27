@@ -15,7 +15,7 @@ import colorcet as cc
 
 
 my_cmap = copy(cc.m_fire)
-my_cmap.set_under("white", alpha=0)
+my_cmap.set_under("black", alpha=0)
 
 a0 = 2.4 * u.dimensionless  # Laser amplitude
 tau = 25.0e-15 / 2.354820045 * u.second  # Laser duration
@@ -44,7 +44,7 @@ ts = addons.LpaDiagnostics(p)
 # Note: one can also normalize by the critical density n_c
 
 rho, rho_info = ts.get_field(
-    field="rho",
+    field="rho_electrons",
     iteration=40110,
     plot=True,
 )
@@ -77,8 +77,8 @@ im_envelope = ax.imshow(
 im_envelope.set_clim(vmin=1.0)
 
 # plot longitudinal field
-ax.plot(e_z_of_z_info.z * 1e6, e_z_of_z / E0 * 25 - 30, color="0.75")
-ax.axhline(-30, color="0.65", ls="-.")
+ax.plot(e_z_of_z_info.z * 1e6, e_z_of_z / E0 * 25 - 20, color="0.75")
+ax.axhline(-20, color="0.65", ls="-.")
 
 cbaxes_rho = inset_axes(
     ax,
