@@ -18,7 +18,7 @@ my_cmap = copy(cc.m_fire)
 my_cmap.set_under("black", alpha=0)
 
 a0 = 2.4 * u.dimensionless  # Laser amplitude
-tau = 25.0e-15 / 2.354820045 * u.second  # Laser duration
+tau = 25.0e-15 * u.second  # Laser duration
 w0 = 22.0e-6 / 1.17741 * u.meter  # Laser waist
 lambda0 = 0.8e-6 * u.meter  # Laser wavelength
 
