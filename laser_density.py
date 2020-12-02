@@ -21,6 +21,7 @@ a0 = 2.4 * u.dimensionless  # Laser amplitude
 tau = 25.0e-15 * u.second  # Laser duration
 w0 = 22.0e-6 / 1.17741 * u.meter  # Laser waist
 lambda0 = 0.8e-6 * u.meter  # Laser wavelength
+n_e = 8.0e18 * 1.0e6 # density, electrons/m^3
 
 laser = lwfa.Laser.from_a0(
     a0=a0,
@@ -31,7 +32,7 @@ n_c = laser.ncrit.to_value("1/m**3")
 # 1.7419595910637713e+27
 E0 = (laser.E0 / a0).to_value("volt/m")
 # 4013376052599.5396
-qe = u.qe.to_value("C")
+qe = u.electron_charge.to_value("C")
 # -1.6021766208e-19
 
 p = pathlib.Path.cwd() / "diags" / "hdf5"
@@ -49,6 +50,9 @@ rho, rho_info = ts.get_field(
     iteration=40110,
     plot=True,
 )
+print(n_e, qe, rho.min())
+print(rho.min() / (qe * n_e))
+
 envelope, env_info = ts.get_laser_envelope(iteration=40110, pol="x")
 
 # get longitudinal field
